@@ -84,7 +84,7 @@
     - debug: var=output.stdout_lines
 
     - name: Testing Docker on local run command below
-      shell: echo -e 'sudo nohup docker run --rm --name=linuxconfig-test -p 80:80 httpd 2>=1 & ;\
+      shell: echo -e 'sudo nohup docker run --rm --name=linuxconfig-test -p 80:80 httpd > /dev/null 2>&1 & ;\
              sudo docker ps -a ; sleep 3 ; firefox --new-tab http://localhost:80 \
              or curl localhost:80 '
       register: output
