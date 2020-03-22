@@ -1,0 +1,91 @@
+# Author : Andrew
+# Tested work CentOS 7.7
+# Install Docker CE and Containerd.io to CentOS 7.7 to localhost
+# 1) clone this repo and install Ansible
+# 2) ansible-playbook install_docker_on_cenOS7.yml
+# 3) ask for sudo password, ensure account with sudo private
+
+---
+- hosts: localhost
+  become: yes
+  vars:
+    docker_url:  "https://download.docker.com/linux/centos/docker-ce.repo"
+    http_port:   8001
+    tomcat_url:  "https://downloads.apache.org/tomcat/tomcat-8/v8.5.51/bin/apache-tomcat-8.5.51-deployer.tar.gz"
+    containerd_url: "https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm"
+
+  vars_prompt:                                   # same as argv option --ask-become-pass
+    - name: "ansible_sudo_pass"
+      prompt: "Sudo password "
+      private: yes
+
+
+  tasks:
+    - name: Add Repos epel-release
+      shell: sudo yum install epel-release -y ; sudo yum install dnf -y
+      register: output
+    - debug: var=output.stdout_lines
+    
+    - name: config dnf config-manager for centOS 7
+      command: sudo dnf install 'dnf-command(config-manager)'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Add Docker Repo to localhost
+      command: sudo dnf config-manager --add-repo="{{ docker_url }}"
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: list All localhost Configured Repos
+      command: 'yum repolist'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: list Docker-CE packages
+      shell: 'sudo dnf list docker-ce --showduplicates -y | sort -r'
+      register: output
+    - debug: var=output.stdout_lines
+    
+    - name: install install Containerd.io to localhost
+      shell: sudo dnf install -y {{ containerd_url }}
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: install Docker CE to localhost
+#      shell: 'sudo dnf install -y --nobest docker-ce'               #work for centos -8 but not 7, error --nobest
+      shell: 'sudo dnf install -y docker-ce'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Download docker-compose and copy to /usr/local/bin
+      shell: curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Copying docker-compose to /usr/local/bin
+      shell: 'sudo mv docker-compose /usr/local/bin && sudo chmod +x /usr/local/bin/docker-compose ; ls -l /usr/local/bin/docker*'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Install PIP3 and install docker-compose
+      shell: 'sudo dnf install -y python3-pip ; sudo pip3 install docker-compose --user'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Disable Firewall service on local host
+      shell: 'sudo systemctl stop firewalld ; sudo systemctl disable firewalld'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Enable Docker Deamon Service for startup after reboot
+      shell: 'sleep 5 ; sudo systemctl enable --now docker ; sudo sytemctl is-active docker ; sudo systemctl is-enabled docker \
+				sleep 3 ; sudo systemctl status docker'
+      register: output
+    - debug: var=output.stdout_lines
+
+    - name: Testing Docker on local run command below
+      shell: echo -e 'sudo nohup docker run --rm --name=linuxconfig-test -p 80:80 httpd 2>=1 & ;\
+             sudo docker ps -a ; sleep 3 ; firefox --new-tab http://localhost:80 \
+             or curl localhost:80 '
+      register: output
+    - debug: var=output.stdout_lines
