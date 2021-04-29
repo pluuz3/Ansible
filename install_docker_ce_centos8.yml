@@ -1,6 +1,7 @@
 # Usage: ansible-playbook output_template.yml 
+# hosts: currently set to local, change to remote host ~/.ansible/hosts
 
-# Author : A.Luu
+# Author : AL
 # Tested work CentOS 8
 
 ---
