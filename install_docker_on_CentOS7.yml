@@ -4,6 +4,8 @@
 # 1) clone this repo and install Ansible
 # 2) ansible-playbook install_docker_on_cenOS7.yml
 # 3) ask for sudo password, ensure account with sudo private
+# Usage : ./install_docker_on_CentOS8.yml
+
 
 ---
 - hosts: localhost
